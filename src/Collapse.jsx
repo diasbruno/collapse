@@ -1,4 +1,5 @@
 import React, { PropTypes, Children }from 'react';
+import KeyCode from './KeyCode';
 import CollapsePanel from './Panel';
 import openAnimationFactory from './openAnimationFactory';
 
@@ -85,6 +86,61 @@ const Collapse = React.createClass({
     };
   },
 
+  onTabClick(key) {
+    this.setActiveKey(key);
+    if (this.state.activeKey !== key) {
+      this.props.onChange(key);
+    }
+  },
+
+  onNavKeyDown(e) {
+    const eventKeyCode = e.keyCode;
+
+    if (eventKeyCode === KeyCode.ENTER) {
+      const ariaid = e.target.getAttribute('aria-controls');
+      const re = /(\d+)$/g;
+      const key = re.exec(ariaid);
+      this.onTabClick(key);
+    } else if (eventKeyCode === KeyCode.RIGHT || eventKeyCode === KeyCode.DOWN) {
+      e.preventDefault();
+      const nextKey = this.getNextActiveKey(true);
+      this.onTabClick(nextKey);
+    } else if (eventKeyCode === KeyCode.LEFT || eventKeyCode === KeyCode.UP) {
+      e.preventDefault();
+      const previousKey = this.getNextActiveKey(false);
+      this.onTabClick(previousKey);
+    }
+  },
+  getNextActiveKey(next) {
+    const activeKey = this.state.activeKey;
+    const children = [];
+
+    React.Children.forEach(this.props.children, (c) => {
+      if (!c.props.disabled) {
+        if (next) {
+          children.push(c);
+        } else {
+          children.unshift(c);
+        }
+      }
+    });
+
+    const length = children.length;
+    let ret = length && children[0].key;
+    children.forEach((child, i) => {
+      if (child.key === activeKey[0]) {
+        if (i === length - 1) {
+          ret = children[0];
+        } else {
+          ret = children[i + 1];
+        }
+        ret = ret.key;
+      }
+    });
+
+    return ret;
+  },
+
   getItems() {
     const activeKey = this.state.activeKey;
     const { prefixCls, accordion } = this.props;
@@ -101,6 +157,7 @@ const Collapse = React.createClass({
 
       const props = {
         key,
+        index: key,
         header,
         isActive,
         prefixCls,
@@ -125,7 +182,11 @@ const Collapse = React.createClass({
   render() {
     const prefixCls = this.props.prefixCls;
     return (
-      <div className={prefixCls}>
+      <div
+        tabIndex="0"
+        className={prefixCls} role="tablist"
+        onKeyDown={this.onNavKeyDown}
+      >
         {this.getItems()}
       </div>
     );

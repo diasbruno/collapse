@@ -9,6 +9,7 @@ const CollapsePanel = React.createClass({
       PropTypes.string,
       PropTypes.object,
     ]),
+    index: PropTypes.number,
     children: PropTypes.any,
     openAnimation: PropTypes.object,
     prefixCls: PropTypes.string,
@@ -34,7 +35,11 @@ const CollapsePanel = React.createClass({
   },
 
   render() {
-    const { className, prefixCls, header, children, isActive } = this.props;
+    const {
+      className, prefixCls, header, children, isActive,
+    } = this.props;
+    const key = this.props.index;
+
     const headerCls = `${prefixCls}-header`;
     const itemCls = classNames({
       [`${prefixCls}-item`]: true,
@@ -45,12 +50,18 @@ const CollapsePanel = React.createClass({
       <div className={ itemCls }>
         <div
           className={headerCls}
+          ref="tab-ref"
+          aria-controls={`react-collapse-${key}`}
+          aria-disabled={false}
+          aria-expanded={isActive}
+          aria-selected={isActive}
           onClick={this.handleItemClick}
           role="tab"
-          aria-expanded={isActive}
+          tabIndex="0"
+          onClick={this.handleItemClick}
         >
           <i className="arrow"></i>
-          {header}
+          <a title={header}>{header}</a>
         </div>
         <Animate
           showProp="isActive"
@@ -58,7 +69,7 @@ const CollapsePanel = React.createClass({
           component=""
           animation={this.props.openAnimation}
         >
-          <PanelContent prefixCls={prefixCls} isActive={isActive}>
+          <PanelContent index={key} prefixCls={prefixCls} isActive={isActive}>
             {children}
           </PanelContent>
         </Animate>
